@@ -35,37 +35,41 @@ def configure_optimizers(model, lr, betas=(0.9, 0.96), weight_decay=4.5e-2):
     return optimizer
 
 def train(args, lr_schedule, model, template, len_train_dataset, data_loader_train, optim, device_id):
-    save_path = args.save_path
-    rank = dist.get_rank()
-    if not os.path.exists(save_path) and rank == 0:
-        os.mkdir(save_path)
+    # ... existing code ...
 
-    for epoch in range(1, args.epochs+1):
-        data_loader_train.sampler.set_epoch(epoch)
-        metric_logger = misc.MetricLogger(delimiter="  ")
-        metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-        if rank == 0:
-            print(f'Epoch {epoch}:')
-        for data_iter_step, (imgs, o_prompt, e_prompt) in enumerate(tqdm(data_loader_train)):
-            lr_schedule.step()
-            imgs = imgs.to(device=device_id, non_blocking=True)
-            o_prompt, e_prompt = o_prompt[0], e_prompt[0]
-            e_prompt = compose_text_with_templates(e_prompt, template) 
-            with torch.cuda.amp.autocast():
-                bboxs = torch.ceil(map_cooridates(model.module.get_anchor_box(imgs)))
-                imgs_new, mask_imgs = get_mask_imgs(imgs, bboxs)
-                results = model.module.generate_result(imgs_new.to(device_id), mask_imgs.to(device_id), e_prompt).to(device_id)
-                loss, loss_clip, loss_cip_dir, loss_structure = model.module.get_loss(imgs_new, results, e_prompt, o_prompt)
-            loss.backward()
-            if data_iter_step % args.accum_grad == 0:
-                optim.step()
-                optim.zero_grad()
-            metric_logger.update(loss=loss.item())
+    # Initialize MiDaS and ControlNet models once before the training loop
+    # You might need to move this to the RGN model's __init__ method for better code structure
+    depth_estimator = MiDaSDetector.from_pretrained("lllyasviel/ControlNet")
+    controlnet = ControlNetModel.from_pretrained(
+        "lllyasviel/sd-controlnet-depth",
+        torch_dtype=torch.float16
+    ).to(device_id)
 
-        if rank == 0:
-            if epoch % args.ckpt_interval == 0:
-                torch.save(model.state_dict(), os.path.join(save_path, f'transformer_epoch_{epoch}.pth'))
-            torch.save(model.state_dict(), os.path.join(save_path, 'last.pth'))
+    for data_iter_step, (imgs, o_prompt, e_prompt) in enumerate(tqdm(data_loader_train)):
+        lr_schedule.step()
+        imgs = imgs.to(device=device_id, non_blocking=True)
+        o_prompt, e_prompt = o_prompt[0], e_prompt[0]
+        e_prompt = compose_text_with_templates(e_prompt, template) 
+
+        with torch.cuda.amp.autocast():
+            # Get bounding boxes
+            bboxs = torch.ceil(map_cooridates(model.module.get_anchor_box(imgs)))
+            imgs_new, mask_imgs = get_mask_imgs(imgs, bboxs)
+
+            # NEW: Generate depth map using MiDaS
+            depth_map = depth_estimator(imgs_new)
+
+            # NEW: Pass the depth map to the generate_result function
+            results = model.module.generate_result(
+                imgs_new.to(device_id), 
+                mask_imgs.to(device_id), 
+                e_prompt,
+                depth_map.to(device_id) # The new conditioning input
+            ).to(device_id)
+
+            loss, loss_clip, loss_cip_dir, loss_structure = model.module.get_loss(imgs_new, results, e_prompt, o_prompt)
+        
+        # ... existing code for backward pass and saving ...
 
     return model
 
@@ -181,3 +185,4 @@ if __name__ == '__main__':
     args = get_args_parser()
     main(args)
     
+
