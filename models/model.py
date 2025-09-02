@@ -1,3 +1,6 @@
+from diffusers import StableDiffusionControlNetInpaintPipeline, ControlNetModel
+from controlnet_aux import MiDaSDetector
+
 from typing import Tuple
 from torchvision.utils import save_image
 from torchvision import transforms
@@ -39,6 +42,26 @@ class RGN(nn.Module):
         emb_dim, emb_dim2 = 12,8
 
         self.box = torch.Tensor(range(4, self.max_window_size+1, 2)).to(device)
+
+        # Initialize the MiDaS detector
+        self.depth_estimator = MiDaSDetector.from_pretrained("lllyasviel/ControlNet")
+        
+        # Initialize the ControlNet model for depth
+        self.controlnet = ControlNetModel.from_pretrained(
+            "lllyasviel/sd-controlnet-depth",
+            torch_dtype=torch.float16
+        )
+
+        # The diffusion pipe now needs to use ControlNet
+        # We will use StableDiffusionControlNetInpaintPipeline to keep your inpainting ability
+        self.pipe = StableDiffusionControlNetInpaintPipeline.from_pretrained(
+            "runwayml/stable-diffusion-v1-5", # Use a base SD model, not an inpainting-specific one
+            controlnet=self.controlnet,
+            torch_dtype=torch.float16
+        )
+        self.pipe.to(device)
+        self.generator = torch.Generator(device=device).manual_seed(args.seed)
+        
         # Define AnchorNet
         self.anchor_net = nn.Sequential(
                 nn.Conv2d(len(self.box)*emb_dim, emb_dim2, 1),
@@ -140,8 +163,9 @@ class RGN(nn.Module):
         bbox = torch.stack([x1_new, y1_new, x2_new, y2_new], dim=1)
         return bbox
     
-    def generate_result(self, imgs, mask_imgs, prompts):
-        return generate(imgs, mask_imgs, self.pipe, self.generator, prompts, self.device)
+    def generate_result(self, imgs, mask_imgs, prompts, depth_maps):
+    # Pass the depth maps to the generate function as a new argument
+    return generate(imgs, mask_imgs, self.pipe, self.generator, prompts, self.device, depth_maps)
 
     def calculate_clip_loss(self, outputs, target_embeddings):
         # randomly select embeddings
@@ -196,4 +220,5 @@ class RGN(nn.Module):
         loss.requires_grad_(True)
        
         return loss, loss_clip, loss_dir_clip, loss_structure
+
 
