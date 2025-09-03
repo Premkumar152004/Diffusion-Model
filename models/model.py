@@ -33,7 +33,7 @@ class RGN(nn.Module):
         self.sample_number = args.point_number
         self.rank = dist.get_rank()
         self.max_window_size = args.max_window_size
-        self.pipe, self.generator = init_diffusion_engine(args.diffusion_model_path, device)
+        self.pipe, self.generator = init_diffusion_engine(args.diffusion_model_path, device, args)
         self.dino = vits.__dict__["vit_base"](patch_size=patch_size, num_classes=0).to(device)
         self.dino.eval()
         state_dict = torch.hub.load_state_dict_from_url(url="https://dl.fbaipublicfiles.com/dino/dino_vitbase8_pretrain/dino_vitbase8_pretrain.pth")
@@ -220,6 +220,7 @@ class RGN(nn.Module):
         loss.requires_grad_(True)
        
         return loss, loss_clip, loss_dir_clip, loss_structure
+
 
 
 
