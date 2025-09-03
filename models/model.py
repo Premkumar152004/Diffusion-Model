@@ -44,7 +44,7 @@ class RGN(nn.Module):
         self.box = torch.Tensor(range(4, self.max_window_size+1, 2)).to(device)
 
         # Initialize the MiDaS detector
-        self.depth_estimator = MiDaSDetector.from_pretrained("lllyasviel/ControlNet")
+        self.depth_estimator = MidasDetector.from_pretrained("lllyasviel/ControlNet")
         
         # Initialize the ControlNet model for depth
         self.controlnet = ControlNetModel.from_pretrained(
@@ -220,6 +220,7 @@ class RGN(nn.Module):
         loss.requires_grad_(True)
        
         return loss, loss_clip, loss_dir_clip, loss_structure
+
 
 
 
