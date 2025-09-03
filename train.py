@@ -41,7 +41,7 @@ def train(args, lr_schedule, model, template, len_train_dataset, data_loader_tra
 
     # Initialize MiDaS and ControlNet models once before the training loop
     # You might need to move this to the RGN model's __init__ method for better code structure
-    depth_estimator = MiDaSDetector.from_pretrained("lllyasviel/ControlNet")
+    depth_estimator = MidasDetector.from_pretrained("lllyasviel/ControlNet")
     controlnet = ControlNetModel.from_pretrained(
         "lllyasviel/sd-controlnet-depth",
         torch_dtype=torch.float16
@@ -187,6 +187,7 @@ if __name__ == '__main__':
     args = get_args_parser()
     main(args)
     
+
 
 
 
