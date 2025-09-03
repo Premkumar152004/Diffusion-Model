@@ -59,7 +59,7 @@ def train(args, lr_schedule, model, template, len_train_dataset, data_loader_tra
             imgs_new, mask_imgs = get_mask_imgs(imgs, bboxs)
 
             # NEW: Generate depth map using MiDaS
-            depth_map = depth_estimator(imgs_new)
+            depth_map = depth_estimator(imgs_new.cpu())
 
             # NEW: Pass the depth map to the generate_result function
             results = model.module.generate_result(
@@ -187,6 +187,7 @@ if __name__ == '__main__':
     args = get_args_parser()
     main(args)
     
+
 
 
 
