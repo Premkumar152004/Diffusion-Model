@@ -1,3 +1,4 @@
+from torchvision import transforms
 from tqdm import tqdm
 from einops import rearrange
 from PIL import Image
@@ -59,9 +60,10 @@ def train(args, lr_schedule, model, template, len_train_dataset, data_loader_tra
             imgs_new, mask_imgs = get_mask_imgs(imgs, bboxs)
 
             # NEW: Generate depth map using MiDaS
-            depth_map = depth_estimator(imgs_new[0].cpu().permute(1, 2, 0))
+            depth_map = transforms.ToTensor()(depth_estimator(imgs_new[0].cpu().permute(1, 2, 0)))
 
             # NEW: Pass the depth map to the generate_result function
+
             results = model.module.generate_result(
                 imgs_new.to(device_id), 
                 mask_imgs.to(device_id), 
@@ -187,6 +189,7 @@ if __name__ == '__main__':
     args = get_args_parser()
     main(args)
     
+
 
 
 
