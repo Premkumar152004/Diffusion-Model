@@ -60,16 +60,17 @@ def train(args, lr_schedule, model, template, len_train_dataset, data_loader_tra
             imgs_new, mask_imgs = get_mask_imgs(imgs, bboxs)
 
             # NEW: Generate depth map using MiDaS
-            depth_map = transforms.ToTensor()(depth_estimator(imgs_new[0].cpu().permute(1, 2, 0)))
+            depth_map = transforms.ToTensor()(depth_estimator(imgs[0].cpu().permute(1, 2, 0))).to(device_id)
 
             # NEW: Pass the depth map to the generate_result function
 
             results = model.module.generate_result(
-                imgs_new.to(device_id), 
+                imgs.to(device_id), # Passing the original image
                 mask_imgs.to(device_id), 
                 e_prompt,
-                depth_map.to(device_id) # The new conditioning input
+                depth_map # The new conditioning input
             ).to(device_id)
+
 
             loss, loss_clip, loss_cip_dir, loss_structure = model.module.get_loss(imgs_new, results, e_prompt, o_prompt)
         
@@ -189,6 +190,7 @@ if __name__ == '__main__':
     args = get_args_parser()
     main(args)
     
+
 
 
 
