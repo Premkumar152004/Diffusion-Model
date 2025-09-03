@@ -10,7 +10,7 @@ import cv2
 import torch
 import torchvision.transforms as T
 
-def inpaint(pipe, prompts, init_images, mask_images=None, control_images=None, strength=0.75, guidance_scale=7.5, generator=None, num_samples=1, n_iter=1):
+def inpaint(pipe, prompts, init_images, mask_images=None, control_images=None, strength=0.75, guidance_scale=7.5, generator=None, num_samples=1, n_iter=1,imgs=None):
     all_images = []
     transform = T.PILToTensor()
     for _ in range(n_iter):
@@ -80,4 +80,5 @@ def generate(init_images, mask_images, pipe, generator, prompt=['lion'], device=
     )
 
     return results
+
 
