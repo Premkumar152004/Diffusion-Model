@@ -1,5 +1,5 @@
 from diffusers import StableDiffusionControlNetInpaintPipeline, ControlNetModel
-from controlnet_aux import MiDaSDetector
+from controlnet_aux import MidasDetector
 
 from typing import Tuple
 from torchvision.utils import save_image
@@ -220,6 +220,7 @@ class RGN(nn.Module):
         loss.requires_grad_(True)
        
         return loss, loss_clip, loss_dir_clip, loss_structure
+
 
 
 
