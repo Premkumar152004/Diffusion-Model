@@ -165,7 +165,7 @@ class RGN(nn.Module):
     
     def generate_result(self, imgs, mask_imgs, prompts, depth_maps):
     # Pass the depth maps to the generate function as a new argument
-    return generate(imgs, mask_imgs, self.pipe, self.generator, prompts, self.device, depth_maps)
+        return generate(imgs, mask_imgs, self.pipe, self.generator, prompts, self.device, depth_maps)
 
     def calculate_clip_loss(self, outputs, target_embeddings):
         # randomly select embeddings
@@ -220,5 +220,6 @@ class RGN(nn.Module):
         loss.requires_grad_(True)
        
         return loss, loss_clip, loss_dir_clip, loss_structure
+
 
 
