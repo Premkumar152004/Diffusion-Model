@@ -51,9 +51,7 @@ def init_diffusion_engine(model_path, device, args):
     generator = torch.Generator(device=device).manual_seed(args.seed)
     return pipe, generator
 
-def generate(init_images, mask_images, pipe, generator, prompt=['lion'], device='cuda', depth_maps=None, strength=0.75, 
-    guidance_scale=7.5, num_samples=1, n_iter=1, imgs=None):
-
+def generate(init_images, mask_images, pipe, generator, prompt=['lion'], device='cuda', depth_maps=None, strength=0.75, guidance_scale=7.5, num_samples=1, n_iter=1, imgs=None):
     guidance_scale=7.5, num_samples=1, n_iter=1):
     
     img_size = 512
@@ -80,5 +78,6 @@ def generate(init_images, mask_images, pipe, generator, prompt=['lion'], device=
     )
 
     return results
+
 
 
