@@ -30,7 +30,7 @@ import utils.misc as misc
 import torchvision.transforms as T
 import torch.distributed as dist
 from diffusers import StableDiffusionControlNetInpaintPipeline, ControlNetModel
-from controlnet_aux import MiDaSDetector
+from controlnet_aux import MidasDetector
 
 def configure_optimizers(model, lr, betas=(0.9, 0.96), weight_decay=4.5e-2):
     optimizer = torch.optim.Adam(model.module.anchor_net.parameters(), lr=lr, betas=betas, weight_decay=weight_decay)
@@ -187,5 +187,6 @@ if __name__ == '__main__':
     args = get_args_parser()
     main(args)
     
+
 
 
